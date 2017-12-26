@@ -100,23 +100,29 @@ var getFiles = function getFiles() {
 
   return preaddir(fulldir).then(function (files) {
     extention = extention.indexOf('.') == 0 ? extention : '.' + extention;
+    return {
+      files: files.filter(function (f) {
+        return path.extname(f) == extention;
+      }).map(function (f) {
+        var m = /\d+/.exec(f);
 
-    return files.filter(function (f) {
-      return path.extname(f) == extention;
-    }).map(function (f) {
-      var m = /\d+/.exec(f);
-
-      if (!m) {
-        console.warn('> cannot found file sequence number in file name...');
-      }
-      return {
-        fullname: path.resolve(bpath, dir, f),
-        number: m ? parseInt(m[0], 10) : 0
-      };
-    }).filter(function (f, i) {
-      // 每 n (which) 张选择一张，比如只用奇数 或者 偶数
-      return i % a == b;
-    });
+        if (!m) {
+          console.warn('> cannot found file sequence number in file name...');
+        }
+        return {
+          fullname: path.resolve(bpath, dir, f),
+          number: m ? parseInt(m[0], 10) : 0
+        };
+      }).filter(function (f, i) {
+        // 每 n (which) 张选择一张，比如只用奇数 或者 偶数
+        return i % a == b;
+      }),
+      folders: files.map(function (f) {
+        return path.resolve(bpath, dir, f);
+      }).filter(function (f) {
+        return fs.statSync(f).isDirectory();
+      })
+    };
   });
 };
 
@@ -229,7 +235,7 @@ var log = function log(msg) {
   }
 };
 
-var csssteps = function () {
+function csssteps() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   // log
@@ -239,8 +245,16 @@ var csssteps = function () {
 
   log('> start get files', config.verbose);
   getFiles(config.directory, config).then(function (files) {
-    log('> start merge files: ' + files.length, config.verbose);
-    return gmMergeFiles(files, config);
+    if (files.files.length) {
+      // log(`> start merge files: ${files.files.length}`, config.verbose);
+      console.log(config.directory + ' ' + files.files.length + '\u4E2A\u6587\u4EF6');
+      return gmMergeFiles(files.files, config);
+    } else {
+      files.folders.forEach(function (folder) {
+        csssteps(Object.assign({}, config, { directory: folder, filename: path.basename(folder) }));
+      });
+      return Promise.reject(config.directory + ' no file');
+    }
   }).then(function () {
     // scale image
     if (config.scale != 1) {
@@ -260,6 +274,6 @@ var csssteps = function () {
   }).catch(function (err) {
     log(err);
   });
-};
+}
 
 module.exports = csssteps;
