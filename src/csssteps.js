@@ -31,7 +31,7 @@ const log = (msg, verbose = true) => {
   }
 };
 
-export default function(config = {}) {
+export default function csssteps(config = {}) {
   // log
   config.fullname = path.resolve(process.cwd(), config.output, config.filename + '' + config.extention);
 
@@ -39,8 +39,16 @@ export default function(config = {}) {
 
   log('> start get files', config.verbose);
   getFiles(config.directory, config).then((files) => {
-    log(`> start merge files: ${files.length}`, config.verbose);
-    return gmMergeFiles(files, config);
+    if (files.files.length) {
+      // log(`> start merge files: ${files.files.length}`, config.verbose);
+      console.log(`${config.directory} ${files.files.length}个文件`);
+      return gmMergeFiles(files.files, config);
+    } else {
+      files.folders.forEach((folder) => {
+        csssteps(Object.assign({}, config, {directory: folder, filename: path.basename(folder)}));
+      });
+      return Promise.reject(config.directory + ' no file');
+    }
   }).then(() => {
     // scale image
     if (config.scale != 1) {

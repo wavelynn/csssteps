@@ -53,21 +53,23 @@ export const getFiles = (dir = '', conf = {}) => {
 
   return preaddir(fulldir).then((files) => {
     extention = extention.indexOf('.') == 0 ? extention : '.' + extention;
+    return {
+      files: files.filter(f => path.extname(f) == extention).map(f => {
+                const m = /\d+/.exec(f);
 
-    return files.filter(f => path.extname(f) == extention).map(f => {
-      const m = /\d+/.exec(f);
-
-      if (!m) {
-        console.warn('> cannot found file sequence number in file name...');
-      }
-      return {
-        fullname: path.resolve(bpath, dir, f),
-        number: m ? parseInt(m[0], 10) : 0
-      };
-    }).filter((f, i) => {
-      // 每 n (which) 张选择一张，比如只用奇数 或者 偶数
-      return i % a == b;
-    });
+                if (!m) {
+                  console.warn('> cannot found file sequence number in file name...');
+                }
+                return {
+                  fullname: path.resolve(bpath, dir, f),
+                  number: m ? parseInt(m[0], 10) : 0
+                };
+              }).filter((f, i) => {
+                // 每 n (which) 张选择一张，比如只用奇数 或者 偶数
+                return i % a == b;
+              }),
+      folders: files.map(f => path.resolve(bpath, dir, f)).filter(f => fs.statSync(f).isDirectory()),
+    };
   });
 };
 

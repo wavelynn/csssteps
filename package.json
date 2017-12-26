@@ -20,7 +20,8 @@
     "imagemin": "^5.3.1",
     "imagemin-jpegtran": "^5.0.2",
     "imagemin-pngquant": "^5.0.1",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.1",
+    "rollup": "^0.53.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
